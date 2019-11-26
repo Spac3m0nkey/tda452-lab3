@@ -1,7 +1,7 @@
 module Sudoku where
 
 import Test.QuickCheck
-
+import Data.Char
 ------------------------------------------------------------------------------
 
 -- | Representation of sudoku puzzles (allows some junk)
@@ -46,14 +46,20 @@ allBlankSudoku = Sudoku $ replicate sudokuSize (replicate sudokuSize Nothing)
 -- | isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
 isSudoku :: Sudoku -> Bool
-isSudoku sud = (lenght sud == sudokuSize) && all (== sudokuSize) sud
+isSudoku (Sudoku sud) = ((length sud) == sudokuSize) && all ((== sudokuSize).length) sud && all(all isValidCell)sud
+  where 
+    isValidCell :: Cell -> Bool
+    isValidCell Nothing = True
+    isValidCell (Just n) = n <= sudokuSize && n >= 0
+  
+
 
 -- * A3
 
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
 isFilled :: Sudoku -> Bool
-isFilled = undefined
+isFilled (Sudoku sud)=  all(all (/=Nothing))sud
 
 ------------------------------------------------------------------------------
 
@@ -62,14 +68,28 @@ isFilled = undefined
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku = undefined
+printSudoku (Sudoku sud) = do putStrLn $ unlines $ map (map showCell) sud
+  where
+    showCell :: Cell -> Char
+    showCell Nothing = '.'
+    showCell (Just n) = intToDigit n 
 
 -- * B2
 
 -- | readSudoku file reads from the file, and either delivers it, or stops
 -- if the file did not contain a sudoku
 readSudoku :: FilePath -> IO Sudoku
-readSudoku = undefined
+readSudoku path = 
+  do 
+    d <- readFile path 
+    let sud = Sudoku (map (map (readCell)) $ lines d)
+    if not (isSudoku sud) 
+      then error "Aids"
+      else return sud
+      where 
+        readCell :: Char -> Cell
+        readCell '.' = Nothing
+        readCell n = Just (digitToInt n)
 
 ------------------------------------------------------------------------------
 

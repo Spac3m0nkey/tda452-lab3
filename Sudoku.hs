@@ -1,7 +1,8 @@
 module Sudoku where
 
 import Test.QuickCheck
-import Data.Char
+import Data.Char(intToDigit, digitToInt)
+import Data.List(nub, transpose)
 ------------------------------------------------------------------------------
 
 -- | Representation of sudoku puzzles (allows some junk)
@@ -97,21 +98,25 @@ readSudoku path =
 
 -- | cell generates an arbitrary cell in a Sudoku
 cell :: Gen (Cell)
-cell = undefined
+cell = frequency [(9, elements [Nothing]), (1, elements [(Just x) | x  <- [1..sudokuSize]])]
 
 
 -- * C2
 
 -- | an instance for generating Arbitrary Sudokus
 instance Arbitrary Sudoku where
-  arbitrary = undefined
+  arbitrary = do
+    let Sudoku sud = allBlankSudoku
+    row <- vectorOf 9 cell
+    return $ Sudoku (map (\r -> row) sud)
+
 
  -- hint: get to know the QuickCheck function vectorOf
  
 -- * C3
 
 prop_Sudoku :: Sudoku -> Bool
-prop_Sudoku = undefined
+prop_Sudoku s= isSudoku s
   -- hint: this definition is simple!
   
 ------------------------------------------------------------------------------
@@ -122,21 +127,31 @@ type Block = [Cell] -- a Row is also a Cell
 -- * D1
 
 isOkayBlock :: Block -> Bool
-isOkayBlock = undefined
+isOkayBlock b = let l = [n |(Just n) <- (filter (/= Nothing) b)] in (length l == length (nub l))
 
 
 -- * D2
 
 blocks :: Sudoku -> [Block]
-blocks = undefined
+blocks (Sudoku sud) =  sud ++ transpose sud ++ buildBlocks sud
+    where 
+      buildBlocks :: [[Cell]] -> [[Cell]]
+      buildBlocks [] = []
+      buildBlocks l = takeBlocks (transpose (take 3 l)) ++ buildBlocks (drop 3 l)
+
+      takeBlocks :: [[Cell]] -> [[Cell]]
+      takeBlocks [] = []
+      takeBlocks l = concat (take 3 l) : takeBlocks (drop 3 l)
+      
+
 
 prop_blocks_lengths :: Sudoku -> Bool
-prop_blocks_lengths = undefined
+prop_blocks_lengths (Sudoku sud) = length (blocks (Sudoku sud)) == 3*sudokuSize  && all (\b -> length b ==sudokuSize) sud
 
 -- * D3
 
 isOkay :: Sudoku -> Bool
-isOkay = undefined
+isOkay s = all (isOkayBlock) (blocks s)
 
 
 ---- Part A ends here --------------------------------------------------------

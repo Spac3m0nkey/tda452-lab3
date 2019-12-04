@@ -179,10 +179,13 @@ prop_blanks_allBlanks (Sudoku sud) = all ((\(x, y) -> ((sud !! x) !! y) == Nothi
 -- * E2
 
 (!!=) :: [a] -> (Int,a) -> [a]
-xs !!= (i,y) = take i xs ++ [y] ++ drop (i + 1) xs
+[] !!= _ = error "(!!=): Array cannot be emtpy"
+xs !!= (i,y)  | i >= length xs || i < 0 = error "(!!=):index out of bounds"
+              | otherwise               = take i xs ++ [y] ++ drop (i + 1) xs
 
---prop_bangBangEquals_correct :: [Int] -> (Int, Int) -> 
---prop_bangBangEquals_correct =
+prop_bangBangEquals_correct ::
+prop_bangBangEquals_correct xs y = 
+    
 
 
 -- * E3

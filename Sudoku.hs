@@ -170,12 +170,13 @@ type Pos = (Int,Int)
 -- * E1
 
 blanks :: Sudoku -> [Pos]
-blanks (Sudoku sud) = map (fst) $ filter (\r -> snd r == Nothing) $ zip [(x,y) | x <- [0..8], y <- [0..8]] (concat sud)
-
+blanks (Sudoku sud) = map (fst) $ filter (\r -> snd r == Nothing) $ zip [(x,y) | y <- [0..8], x <- [0..8]] (concat sud)
 
 prop_blanks_allBlanks :: Sudoku -> Bool
-prop_blanks_allBlanks (Sudoku sud) = all ((\(x, y) -> ((sud !! x) !! y) == Nothing) ) $ blanks (Sudoku sud)
+prop_blanks_allBlanks (Sudoku sud) = all ((\(x, y) -> (takeCell (Sudoku sud) (x,y) == Nothing) )) $ blanks (Sudoku sud)
 
+takeCell :: Sudoku -> (Int,Int) -> Cell
+takeCell (Sudoku sud) (x,y) = ((sud !! y) !! x)
 
 -- * E2
 
@@ -195,11 +196,17 @@ prop_bangBangEquals_correct xs y =
 
 -- * E3x
 
+
 update :: Sudoku -> Pos -> Cell -> Sudoku
 update (Sudoku sud) (x , y) cell =  Sudoku (sud !!= (y,  ((sud !! y) !!= (x, cell)))) 
 
---prop_update_updated :: ...
---prop_update_updated =
+prop_update_updated :: Sudoku -> Gen Bool
+prop_update_updated s = 
+  do
+    x <- choose(0, 8) :: Gen Int
+    y <- choose(0, 8) :: Gen Int
+    c <- cell
+    return $ (takeCell (update s (x,y) c) (x,y)) == c
 
 
 ------------------------------------------------------------------------------

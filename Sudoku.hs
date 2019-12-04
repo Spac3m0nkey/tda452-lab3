@@ -183,8 +183,13 @@ prop_blanks_allBlanks (Sudoku sud) = all ((\(x, y) -> ((sud !! x) !! y) == Nothi
 xs !!= (i,y)  | i >= length xs || i < 0 = error "(!!=):index out of bounds"
               | otherwise               = take i xs ++ [y] ++ drop (i + 1) xs
 
-prop_bangBangEquals_correct ::
+
+prop_bangBangEquals_correct :: [Int] -> Int -> Gen Bool
+prop_bangBangEquals_correct [] _ = return True
 prop_bangBangEquals_correct xs y = 
+  do
+    index <- choose (0, length xs - 1) :: Gen Int
+    return $ (xs !!= (index, y)) !! index == y
     
 
 

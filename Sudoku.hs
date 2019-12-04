@@ -1,8 +1,9 @@
 module Sudoku where
 
 import Test.QuickCheck
-import Data.Char(intToDigit, digitToInt)
+import Data.Char(digitToInt)
 import Data.List(nub, transpose)
+import Data.Maybe(isJust)
 ------------------------------------------------------------------------------
 
 -- | Representation of sudoku puzzles (allows some junk)
@@ -60,7 +61,7 @@ isSudoku (Sudoku sud) = ((length sud) == sudokuSize) && all ((== sudokuSize).len
 -- | isFilled sud checks if sud is completely filled in,
 -- i.e. there are no blanks
 isFilled :: Sudoku -> Bool
-isFilled (Sudoku sud)=  all(all (/=Nothing))sud
+isFilled (Sudoku sud)=  all (all isJust) sud 
 
 ------------------------------------------------------------------------------
 
@@ -73,7 +74,7 @@ printSudoku (Sudoku sud) = do putStrLn $ unlines $ map (map showCell) sud
   where
     showCell :: Cell -> Char
     showCell Nothing = '.'
-    showCell (Just n) = intToDigit n 
+    showCell (Just n) = show n !! 0 
 
 -- * B2
 
@@ -85,7 +86,7 @@ readSudoku path =
     d <- readFile path 
     let sud = Sudoku (map (map (readCell)) $ lines d)
     if not (isSudoku sud) 
-      then error "Aids"
+      then error "readSudoku: The sudoku is poorly formated"
       else return sud
       where 
         readCell :: Char -> Cell
@@ -98,13 +99,14 @@ readSudoku path =
 
 -- | cell generates an arbitrary cell in a Sudoku
 cell :: Gen (Cell)
-cell = frequency [(9, elements [Nothing]), (1, elements [(Just x) | x  <- [1..sudokuSize]])]
+cell = frequency [(9, return Nothing), (1, elements [(Just x) | x  <- [1..sudokuSize]])]
 
 
 -- * C2
 
 -- | an instance for generating Arbitrary Sudokus
 instance Arbitrary Sudoku where
+  arbitrary :: Arbitrary Sudoku => Gen Sudoku
   arbitrary = do
     let Sudoku sud = allBlankSudoku
     row <- vectorOf 9 cell
@@ -116,7 +118,8 @@ instance Arbitrary Sudoku where
 -- * C3
 
 prop_Sudoku :: Sudoku -> Bool
-prop_Sudoku s= isSudoku s
+prop_Sudoku s= isSudoku s 
+
   -- hint: this definition is simple!
   
 ------------------------------------------------------------------------------

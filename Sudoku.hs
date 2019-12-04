@@ -48,7 +48,7 @@ allBlankSudoku = Sudoku $ replicate sudokuSize (replicate sudokuSize Nothing)
 -- | isSudoku sud checks if sud is really a valid representation of a sudoku
 -- puzzle
 isSudoku :: Sudoku -> Bool
-isSudoku (Sudoku sud) = ((length sud) == sudokuSize) && all ((== sudokuSize).length) sud && all(all isValidCell)sud
+isSudoku (Sudoku sud) = (length sud == sudokuSize) && all ((== sudokuSize).length) sud && all(all isValidCell)sud
   where 
     isValidCell :: Cell -> Bool
     isValidCell Nothing = True
@@ -70,11 +70,11 @@ isFilled (Sudoku sud)=  all (all isJust) sud
 -- | printSudoku sud prints a nice representation of the sudoku sud on
 -- the screen
 printSudoku :: Sudoku -> IO ()
-printSudoku (Sudoku sud) = do putStrLn $ unlines $ map (map showCell) sud
+printSudoku (Sudoku sud) = putStrLn $ unlines $ map (map showCell) sud
   where
     showCell :: Cell -> Char
     showCell Nothing = '.'
-    showCell (Just n) = show n !! 0 
+    showCell (Just n) = head $ show n 
 
 -- * B2
 
@@ -84,7 +84,7 @@ readSudoku :: FilePath -> IO Sudoku
 readSudoku path = 
   do 
     d <- readFile path 
-    let sud = Sudoku (map (map (readCell)) $ lines d)
+    let sud = Sudoku (map (map readCell) $ lines d)
     if not (isSudoku sud) 
       then error "readSudoku: The sudoku is poorly formated"
       else return sud
@@ -98,8 +98,8 @@ readSudoku path =
 -- * C1
 
 -- | cell generates an arbitrary cell in a Sudoku
-cell :: Gen (Cell)
-cell = frequency [(9, return Nothing), (1, elements [(Just x) | x  <- [1..sudokuSize]])]
+cell :: Gen Cell
+cell = frequency [(9, return Nothing), (1, elements [Just x | x  <- [1..sudokuSize]])]
 
 
 -- * C2
@@ -117,7 +117,7 @@ instance Arbitrary Sudoku where
 -- * C3
 
 prop_Sudoku :: Sudoku -> Bool
-prop_Sudoku s= isSudoku s 
+prop_Sudoku = isSudoku 
 
   -- hint: this definition is simple!
   
@@ -129,7 +129,7 @@ type Block = [Cell] -- a Row is also a Cell
 -- * D1
 
 isOkayBlock :: Block -> Bool
-isOkayBlock b = let l = [n |(Just n) <- (filter (/= Nothing) b)] in (length l == length (nub l))
+isOkayBlock b = let l = [n |(Just n) <- filter isJust b] in (length l == length (nub l))
 
 
 -- * D2
@@ -153,7 +153,7 @@ prop_blocks_lengths (Sudoku sud) = length (blocks (Sudoku sud)) == 3*sudokuSize 
 -- * D3
 
 isOkay :: Sudoku -> Bool
-isOkay s = all (isOkayBlock) (blocks s)
+isOkay s = all isOkayBlock (blocks s)
 
 
 ---- Part A ends here --------------------------------------------------------

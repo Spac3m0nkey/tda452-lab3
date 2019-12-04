@@ -106,11 +106,10 @@ cell = frequency [(9, return Nothing), (1, elements [(Just x) | x  <- [1..sudoku
 
 -- | an instance for generating Arbitrary Sudokus
 instance Arbitrary Sudoku where
-  arbitrary :: Arbitrary Sudoku => Gen Sudoku
   arbitrary = do
     let Sudoku sud = allBlankSudoku
-    row <- vectorOf 9 cell
-    return $ Sudoku (map (\r -> row) sud)
+    rows <- vectorOf 9 (vectorOf 9 cell)
+    return $ Sudoku rows
 
 
  -- hint: get to know the QuickCheck function vectorOf

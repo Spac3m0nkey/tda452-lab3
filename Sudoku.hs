@@ -34,6 +34,7 @@ example =
     n = Nothing
     j = Just
 
+sudokuSize :: Int
 sudokuSize = 9
 
 -- * A1
@@ -168,18 +169,19 @@ type Pos = (Int,Int)
 -- * E1
 
 blanks :: Sudoku -> [Pos]
-blanks = undefined
+blanks (Sudoku sud) = map (fst) $ filter (\r -> snd r == Nothing) $ zip [(x,y) | x <- [0..8], y <- [0..8]] (concat sud)
 
---prop_blanks_allBlanks :: ...
---prop_blanks_allBlanks =
+
+prop_blanks_allBlanks :: Sudoku -> Bool
+prop_blanks_allBlanks (Sudoku sud) = all ((\(x, y) -> ((sud !! x) !! y) == Nothing) ) $ blanks (Sudoku sud)
 
 
 -- * E2
 
 (!!=) :: [a] -> (Int,a) -> [a]
-xs !!= (i,y) = undefined
+xs !!= (i,y) = take i xs ++ [y] ++ drop (i + 1) xs
 
---prop_bangBangEquals_correct :: ...
+--prop_bangBangEquals_correct :: [Int] -> (Int, Int) -> 
 --prop_bangBangEquals_correct =
 
 

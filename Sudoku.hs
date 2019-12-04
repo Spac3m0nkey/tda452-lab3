@@ -4,6 +4,7 @@ import Test.QuickCheck
 import Data.Char(digitToInt)
 import Data.List(nub, transpose)
 import Data.Maybe(isJust)
+import System.Random
 ------------------------------------------------------------------------------
 
 -- | Representation of sudoku puzzles (allows some junk)
@@ -183,15 +184,18 @@ prop_blanks_allBlanks (Sudoku sud) = all ((\(x, y) -> ((sud !! x) !! y) == Nothi
 xs !!= (i,y)  | i >= length xs || i < 0 = error "(!!=):index out of bounds"
               | otherwise               = take i xs ++ [y] ++ drop (i + 1) xs
 
-prop_bangBangEquals_correct ::
-prop_bangBangEquals_correct xs y = 
+prop_bangBangEquals_correct :: [Int] -> Int -> Gen Bool
+prop_bangBangEquals_correct  [] _   = return True
+prop_bangBangEquals_correct  xs val = do
+                  index <- choose (0, (length xs) - 1) :: Gen Int
+                  return $ ((xs !!= (val, index)) !! index)  == val 
     
 
 
--- * E3
+-- * E3x
 
 update :: Sudoku -> Pos -> Cell -> Sudoku
-update = undefined
+update (Sudoku sud) (x , y) cell =  Sudoku (sud !!= (y,  ((sud !! y) !!= (x, cell)))) 
 
 --prop_update_updated :: ...
 --prop_update_updated =

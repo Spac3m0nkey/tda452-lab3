@@ -2,8 +2,8 @@ module Sudoku where
 
 import Test.QuickCheck
 import Data.Char(digitToInt)
-import Data.List(nub, transpose)
-import Data.Maybe(isJust)
+import Data.List(nub, transpose, (\\))
+import Data.Maybe(isJust, fromJust, listToMaybe, catMaybes)
 import System.Random
 ------------------------------------------------------------------------------
 
@@ -169,8 +169,11 @@ type Pos = (Int,Int)
 
 -- * E1
 
+allCoordinates :: [Pos]
+allCoordinates = [(x,y) | y <- [0..8], x <- [0..8]]
+
 blanks :: Sudoku -> [Pos]
-blanks (Sudoku sud) = map (fst) $ filter (\r -> snd r == Nothing) $ zip [(x,y) | y <- [0..8], x <- [0..8]] (concat sud)
+blanks (Sudoku sud) = map (fst) $ filter (\r -> snd r == Nothing) $ zip allCoordinates (concat sud)
 
 prop_blanks_allBlanks :: Sudoku -> Bool
 prop_blanks_allBlanks (Sudoku sud) = all ((\(x, y) -> (takeCell (Sudoku sud) (x,y) == Nothing) )) $ blanks (Sudoku sud)
@@ -186,13 +189,8 @@ xs !!= (i,y)  | i >= length xs || i < 0 = error "(!!=):index out of bounds"
               | otherwise               = take i xs ++ [y] ++ drop (i + 1) xs
 
 
-prop_bangBangEquals_correct :: [Int] -> Int -> Gen Bool
-prop_bangBangEquals_correct [] _ = return True
-prop_bangBangEquals_correct xs y = 
-  do
-    index <- choose (0, length xs - 1) :: Gen Int
-    return $ (xs !!= (index, y)) !! index == y
-    
+prop_bangBangEquals_correct :: [Int] -> (Int, Int) -> Property
+prop_bangBangEquals_correct xs (i,y) = i < length xs && i >= 0 ==> (xs !!= (i, y)) !! i == y
 
 -- * E3x
 
@@ -212,12 +210,31 @@ prop_update_updated s =
 ------------------------------------------------------------------------------
 
 -- * F1
+solve :: Sudoku -> Maybe Sudoku
+solve s = listToMaybe $ catMaybes $ solve' s (blanks s)
+          where 
+            solve' :: Sudoku -> [Pos] -> [Maybe Sudoku]
+            solve' s p  | not (isSudoku s && isOkay s) = [Nothing]
+                        | p == []                      = [(Just s)]
+                        | otherwise                    = concat $ map (\n -> (solve' (update s (head p) (Just n) ) (drop 1 p) )) [1..9]
 
 
 -- * F2
-
+readAndSolve :: FilePath -> IO ()
+readAndSolve path = do
+  s <- readSudoku path 
+  let sol = solve s 
+    in
+      if (isJust sol)
+        then printSudoku $ fromJust sol
+        else putStrLn "No solutions!"
 
 -- * F3
-
+isSolutionOf :: Sudoku -> Sudoku -> Bool
+isSolutionOf s1 s2 = 
+  (isSudoku s1 && isOkay s1 && [] == blanks s1) && all (\p -> takeCell s1 p == takeCell s2 p) (allCoordinates \\ (blanks s2)) 
 
 -- * F4
+prop_SolveSound :: Sudoku -> Property
+prop_SolveSound s = let sol = solve s in isJust sol ==> (fromJust sol) `isSolutionOf` s
+
